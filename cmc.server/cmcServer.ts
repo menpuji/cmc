@@ -23,7 +23,6 @@ export class CMCServer {
         }
 
         this.server = io(this.httpSvr);
-
         this.isOpened = true;
         console.log("socket服务器启动成功！");
     }
@@ -36,41 +35,38 @@ export class CMCServer {
 
             this.server.on('connection', socket => {
                 socket.on("client_join", (client: CMCClient) => {
-                    console.log("客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
-                    let hasClient = false;
-                    for (let item of this.clientList) {
-                        if (item.ClientId == client.ClientId)
-                            hasClient = true;
-                        break
+                    console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
+                    for (let i = 0; i < this.clientList.length; i++) {
+                        if (this.clientList[i].ClientId == client.ClientId) {
+                            this.clientList[i].Socket.disconnect(true);
+                            this.clientList.splice(i, 1);
+                        }
                     }
-                    if (!hasClient) {
-                        client.Socket = socket;
-                        this.clientList.push(client);
-                        this.onClientConnect && this.onClientConnect(client);
-                    }
-                    else {
-                        //如果已经存在客户端连接强制关闭新的连接
-                        socket.disconnect(true);
-                    }
+
+                    client.Socket = socket;
+                    this.clientList.push(client);
+                    this.onClientConnect && this.onClientConnect(client);
                 });
 
                 socket.on("client_msg_event", msg => {
-                    console.log("client_msg_event=>" , msg);
+                    console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
                     let sender;
                     for (let item of this.clientList) {
-                        if (socket.id == item.Socket.id)
+                        if (socket.id == item.Socket.id) {
                             sender = { ClientId: item.ClientId };
-                        break;
+                            break;
+                        }
                     }
                     this.onReceived && this.onReceived(msg, sender);
                 });
 
                 socket.on('disconnect', () => {
-                    console.log("客户端【" + socket.id + "】断开连接！");
+                    console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (let i = 0; i < this.clientList.length; i++) {
-                        if (this.clientList[i].Socket.id == socket.id)
+                        if (this.clientList[i].Socket.id == socket.id) {
                             this.clientList.splice(i, 1);
-                        break
+                            break;
+                        }
                     }
                 });
 
@@ -85,6 +81,8 @@ export class CMCServer {
         }
     }
     Send(clientId, msg) {
+        console.log("[" + new Date().toString() + "]send clientId", clientId);
+        console.log("[" + new Date().toString() + "]send msg:", msg);
         for (let item of this.clientList) {
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));

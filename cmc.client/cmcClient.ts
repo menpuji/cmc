@@ -32,7 +32,7 @@ export class CMCClient {
             this.onDisconnect && this.onDisconnect();
         });
 
-        this.socket.on("server_msg_event", msg => { 
+        this.socket.on("server_msg_event", msg => {
             this.onReceive && this.onReceive(JSON.parse(msg));
         });
     }
