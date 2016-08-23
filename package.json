@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/menpuji/cmc/issues"
   },
-  "homepage": "https://github.com/menpuji/cmc#readme"
+  "homepage": "https://github.com/menpuji/cmc#readme",
+  "dependencies": {
+    "socket.io": "*",
+    "socket.io-client": "*"
+  }
 }

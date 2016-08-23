@@ -83,11 +83,15 @@ export class CMCServer {
     Send(clientId, msg) {
         console.log("[" + new Date().toString() + "]send clientId", clientId);
         console.log("[" + new Date().toString() + "]send msg:", msg);
+        let has: boolean = false;
         for (let item of this.clientList) {
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
+                has = true;
+                break;
             }
         }
+        if (!has) throw "发送失败，客户端[" + clientId + "]未连接！";
     }
     onReceived: (msg, sender) => void;
     onClientDisconnect: (sender: { ClientId: string }) => void;
