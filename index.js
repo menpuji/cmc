@@ -1,2 +1,2 @@
-exports.CMCClient = require('./cmc.server')
-exports.CMCServer = require('./cmc.client')
+exports.CMCServer = require('./cmc.server')
+exports.CMCClient = require('./cmc.client')

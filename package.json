@@ -1,6 +1,6 @@
   {
-  "name": "mpj-cmc",
-  "version": "1.0.3",
+  "name": "cmc",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
