@@ -1,6 +1,11 @@
   {
+<<<<<<< HEAD
   "name": "mpj-cmc",
   "version": "1.0.4",
+=======
+  "name": "cmc",
+  "version": "1.0.12",
+>>>>>>> 5331c3c7abf891f320e7fa7ee781c243758d615a
   "description": "",
   "main": "index.js",
   "scripts": {

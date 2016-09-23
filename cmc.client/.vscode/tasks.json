@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "0.1.0",
@@ -8,4 +9,15 @@
     "showOutput": "silent",
     "isWatching": true,
     "problemMatcher": "$tsc-watch"
+=======
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "0.1.0",
+  "command": "tsc",
+  "isShellCommand": true,
+  "args": ["-w", "-p", "."],
+  "showOutput": "silent",
+  "isWatching": true,
+  "problemMatcher": "$tsc-watch"
+>>>>>>> 5331c3c7abf891f320e7fa7ee781c243758d615a
 }
