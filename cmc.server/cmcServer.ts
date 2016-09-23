@@ -91,7 +91,7 @@ export class CMCServer {
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
                 has = true;
-                break;
+                break; 
             }
         }
         if (!has) {
