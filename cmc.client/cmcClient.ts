@@ -27,6 +27,25 @@ export class CMCClient {
         this.socket.on('connect_error', function (data) {
             console.log("连接失败", data);
         });
+        this.socket.on("connect_timeout", () => {
+            console.log("连接超时！");
+        });
+        this.socket.on("reconnect", (num) => {
+            console.log("重连，", num);
+        });
+        this.socket.on("reconnect_attempt", () => {
+            console.log("reconnect_attempt");
+        });
+        this.socket.on("reconnecting", (num) => {
+            console.log("reconnecting", num);
+        });
+        this.socket.on("reconnect_error", (err) => {
+            console.log("reconnect_error", err);
+        });
+        this.socket.on("reconnect_failed", () => { 
+            console.log("reconnect_failed");
+        });
+
         this.socket.on('disconnect', function () {
             console.log("与服务器连接断开！");
             this.onDisconnect && this.onDisconnect();
@@ -34,6 +53,10 @@ export class CMCClient {
 
         this.socket.on("server_msg_event", msg => {
             this.onReceive && this.onReceive(JSON.parse(msg));
+        });
+
+        this.socket.on("error", (err) => {
+            console.log("错误消息：", err);
         });
     }
 

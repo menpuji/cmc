@@ -45,6 +45,7 @@ export class CMCServer {
 
                     client.Socket = socket;
                     this.clientList.push(client);
+                    console.log("当前客户端列表：", this.clientList.length);
                     this.onClientConnect && this.onClientConnect(client);
                 });
 
@@ -81,17 +82,21 @@ export class CMCServer {
         }
     }
     Send(clientId, msg) {
-        console.log("[" + new Date().toString() + "]send clientId", clientId);
+        console.log("[" + new Date().toString() + "]目的 clientId", clientId);
         console.log("[" + new Date().toString() + "]send msg:", msg);
+
         let has: boolean = false;
         for (let item of this.clientList) {
+            console.log("[" + new Date().toString() + "]当前客户端列表：", item.ClientId);
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
                 has = true;
                 break;
             }
         }
-        if (!has) throw "发送失败，客户端[" + clientId + "]未连接！";
+        if (!has) {
+            console.log("发送失败，客户端[" + clientId + "]未连接！");
+        }
     }
     onReceived: (msg, sender) => void;
     onClientDisconnect: (sender: { ClientId: string }) => void;
