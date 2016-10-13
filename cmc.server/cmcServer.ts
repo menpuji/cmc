@@ -30,13 +30,6 @@ export class CMCServer {
         this.server.close();
     }
 
-    private printClient(clientList:CMCClient[]){
-        console.log("当前客户端列表：clientList length",clientList.length);
-        clientList.forEach(function(client){
-            console.log("client:(client.ClientId client.Socket.id)", client.ClientId, client.Socket.id);
-        })
-    }
-
     Listen() {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
@@ -53,9 +46,13 @@ export class CMCServer {
                     }
 
                     client.Socket = socket;
-                    console.log("加入一个client：(client.ClientId client.Socket.id)", client.ClientId, client.Socket.id);
                     this.clientList.push(client);
-                    this.printClient(this.clientList);
+
+                    //日志打印代码
+                    this.printSocketList("socket.on(client_join");
+                    //日志打印代码
+                    this.printClient("socket.on(client_join");
+
                     this.onClientConnect && this.onClientConnect(client);
                 });
 
@@ -72,12 +69,19 @@ export class CMCServer {
                 });
 
                 socket.on('disconnect', () => {
+                    console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (let i = 0; i < this.clientList.length; i++) {
                         if (this.clientList[i].Socket.id == socket.id) {
                             console.log("[" + new Date().toString() + "]客户端(storeId)【" + this.clientList[i].ClientId + "】断 开连接！");
                             console.log("删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
                             this.clientList.splice(i, 1);
-                            this.printClient(this.clientList);
+
+                            //日志打印代码
+                            this.printSocketList("socket.on(disconnect");
+                            //日志打印代码
+                            this.printClient("socket.on(disconnect");
+
+
                             break;
                         }
                     }
@@ -103,7 +107,7 @@ export class CMCServer {
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
                 has = true;
-                break; 
+                break;
             }
         }
         if (!has) {
@@ -114,6 +118,18 @@ export class CMCServer {
     onClientDisconnect: (sender: { ClientId: string }) => void;
     onClientConnect: (client: CMCClient) => void;
     onError: (err, client) => void;
+
+    private printSocketList(str?: string) {
+        for (let key in this.server.sockets) {
+            console.log("[" + new Date().toString() + "] " + str + " 当前socketId列表：", key);
+        }
+    }
+    private printClient(str?: string) {
+        console.log("当前客户端列表：this.clientList.length", this.clientList.length);
+        for (let item of this.clientList) {
+            console.log("[" + new Date().toString() + "] " + str + " 当前ClientList列表：", item.ClientId, item.Socket.id);
+        }
+    }
 }
 
 interface CMCClient {

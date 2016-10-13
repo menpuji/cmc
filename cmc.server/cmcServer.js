@@ -1,8 +1,8 @@
 "use strict";
-var io = require("socket.io");
-var http = require('http');
-var CMCServer = (function () {
-    function CMCServer(options) {
+const io = require("socket.io");
+const http = require('http');
+class CMCServer {
+    constructor(options) {
         this.isOpened = false;
         this.clientList = [];
         this.port = 5050;
@@ -13,91 +13,81 @@ var CMCServer = (function () {
             this.port = options.port;
         }
     }
-    Object.defineProperty(CMCServer.prototype, "IsOpened", {
-        get: function () { return this.isOpened; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(CMCServer.prototype, "Port", {
-        get: function () { return this.port; },
-        enumerable: true,
-        configurable: true
-    });
-    CMCServer.prototype.Open = function () {
+    get IsOpened() { return this.isOpened; }
+    get Port() { return this.port; }
+    Open() {
         if (!this.httpSvr) {
             this.httpSvr = http.createServer();
         }
         this.server = io(this.httpSvr);
         this.isOpened = true;
         console.log("socket服务器启动成功！");
-    };
-    CMCServer.prototype.Close = function () {
+    }
+    Close() {
         this.server.close();
-    };
-    CMCServer.prototype.printClient = function (clientList) {
-        console.log("当前客户端列表：clientList length", clientList.length);
-        clientList.forEach(function (client) {
-            console.log("client:(client.ClientId client.Socket.id)", client.ClientId, client.Socket.id);
-        });
-    };
-    CMCServer.prototype.Listen = function () {
-        var _this = this;
+    }
+    Listen() {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
-            this.server.on('connection', function (socket) {
-                socket.on("client_join", function (client) {
+            this.server.on('connection', socket => {
+                socket.on("client_join", (client) => {
                     console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
-                    for (var i = 0; i < _this.clientList.length; i++) {
-                        if (_this.clientList[i].ClientId == client.ClientId) {
+                    for (let i = 0; i < this.clientList.length; i++) {
+                        let item = this.clientList[i];
+                        if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
                             //true?  disconnect()会触发 disconnect event
-                            _this.clientList[i].Socket.disconnect();
+                            this.clientList[i].Socket.disconnect();
                         }
                     }
                     client.Socket = socket;
-                    console.log("加入一个client：(client.ClientId client.Socket.id)", client.ClientId, client.Socket.id);
-                    _this.clientList.push(client);
-                    _this.printClient(_this.clientList);
-                    _this.onClientConnect && _this.onClientConnect(client);
+                    this.clientList.push(client);
+                    //日志打印代码
+                    this.printSocketList("socket.on(client_join");
+                    //日志打印代码
+                    this.printClient("socket.on(client_join");
+                    this.onClientConnect && this.onClientConnect(client);
                 });
-                socket.on("client_msg_event", function (msg) {
+                socket.on("client_msg_event", msg => {
                     console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
-                    var sender;
-                    for (var _i = 0, _a = _this.clientList; _i < _a.length; _i++) {
-                        var item = _a[_i];
+                    let sender;
+                    for (let item of this.clientList) {
                         if (socket.id == item.Socket.id) {
                             sender = { ClientId: item.ClientId };
                             break;
                         }
                     }
-                    _this.onReceived && _this.onReceived(msg, sender);
+                    this.onReceived && this.onReceived(msg, sender);
                 });
-                socket.on('disconnect', function () {
+                socket.on('disconnect', () => {
                     console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
-                    for (var i = 0; i < _this.clientList.length; i++) {
-                        if (_this.clientList[i].Socket.id == socket.id) {
-                            console.log("删除client：(client.ClientId client.Socket.id)", _this.clientList[i].ClientId, _this.clientList[i].Socket.id);
-                            _this.clientList.splice(i, 1);
-                            _this.printClient(_this.clientList);
+                    for (let i = 0; i < this.clientList.length; i++) {
+                        if (this.clientList[i].Socket.id == socket.id) {
+                            console.log("[" + new Date().toString() + "]客户端(storeId)【" + this.clientList[i].ClientId + "】断 开连接！");
+                            console.log("删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
+                            this.clientList.splice(i, 1);
+                            //日志打印代码
+                            this.printSocketList("socket.on(disconnect");
+                            //日志打印代码
+                            this.printClient("socket.on(disconnect");
                             break;
                         }
                     }
                 });
-                socket.on("error", function (err, client) {
+                socket.on("error", (err, client) => {
                     console.log("错误消息：", err);
-                    _this.onError && _this.onError(err, client);
+                    this.onError && this.onError(err, client);
                 });
             });
             if (this.port) {
                 this.httpSvr.listen(this.port);
             }
         }
-    };
-    CMCServer.prototype.Send = function (clientId, msg) {
+    }
+    Send(clientId, msg) {
         console.log("[" + new Date().toString() + "]目的 clientId", clientId);
         console.log("[" + new Date().toString() + "]send msg:", msg);
-        var has = false;
-        for (var _i = 0, _a = this.clientList; _i < _a.length; _i++) {
-            var item = _a[_i];
+        let has = false;
+        for (let item of this.clientList) {
             console.log("[" + new Date().toString() + "]当前客户端列表：", item.ClientId);
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
@@ -108,7 +98,17 @@ var CMCServer = (function () {
         if (!has) {
             console.log("发送失败，客户端[" + clientId + "]未连接！");
         }
-    };
-    return CMCServer;
-}());
+    }
+    printSocketList(str) {
+        for (let key in this.server.sockets) {
+            console.log("[" + new Date().toString() + "] " + str + " 当前socketId列表：", key);
+        }
+    }
+    printClient(str) {
+        console.log("当前客户端列表：this.clientList.length", this.clientList.length);
+        for (let item of this.clientList) {
+            console.log("[" + new Date().toString() + "] " + str + " 当前ClientList列表：", item.ClientId, item.Socket.id);
+        }
+    }
+}
 exports.CMCServer = CMCServer;
