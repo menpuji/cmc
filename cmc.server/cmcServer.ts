@@ -120,9 +120,12 @@ export class CMCServer {
     onError: (err, client) => void;
 
     private printSocketList(str?: string) {
-        for (let key in this.server.sockets) {
+        let count = 0;
+        for (let key in this.server.sockets.sockets) {
             console.log("[" + new Date().toString() + "] " + str + " 当前socketId列表：", key);
+            count++;
         }
+        console.log("[" + new Date().toString() + "] " + str + "当前socket 数目：", count);
     }
     private printClient(str?: string) {
         console.log("当前客户端列表：this.clientList.length", this.clientList.length);

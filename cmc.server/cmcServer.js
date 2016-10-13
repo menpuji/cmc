@@ -100,9 +100,12 @@ class CMCServer {
         }
     }
     printSocketList(str) {
-        for (let key in this.server.sockets) {
+        let count = 0;
+        for (let key in this.server.sockets.sockets) {
             console.log("[" + new Date().toString() + "] " + str + " 当前socketId列表：", key);
+            count++;
         }
+        console.log("[" + new Date().toString() + "] " + str + "当前socket 数目：", count);
     }
     printClient(str) {
         console.log("当前客户端列表：this.clientList.length", this.clientList.length);
