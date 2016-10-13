@@ -29,6 +29,14 @@ export class CMCServer {
     Close() {
         this.server.close();
     }
+
+    private printClient(clientList:CMCClient[]){
+        console.log("当前客户端列表：clientList length",clientList.length);
+        clientList.forEach(function(client){
+            console.log("client:(client.ClientId client.Socket.id)", client.ClientId, client.Socket.id);
+        })
+    }
+
     Listen() {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
@@ -38,14 +46,15 @@ export class CMCServer {
                     console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
                     for (let i = 0; i < this.clientList.length; i++) {
                         if (this.clientList[i].ClientId == client.ClientId) {
-                            this.clientList[i].Socket.disconnect(true);
-                            this.clientList.splice(i, 1);
+                            //true?  disconnect()会触发 disconnect event
+                            this.clientList[i].Socket.disconnect();
                         }
                     }
 
                     client.Socket = socket;
+                    console.log("加入一个client：(client.ClientId client.Socket.id)", client.ClientId, client.Socket.id);
                     this.clientList.push(client);
-                    console.log("当前客户端列表：", this.clientList.length);
+                    this.printClient(this.clientList);
                     this.onClientConnect && this.onClientConnect(client);
                 });
 
@@ -65,7 +74,9 @@ export class CMCServer {
                     console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (let i = 0; i < this.clientList.length; i++) {
                         if (this.clientList[i].Socket.id == socket.id) {
+                            console.log("删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
                             this.clientList.splice(i, 1);
+                            this.printClient(this.clientList);
                             break;
                         }
                     }
