@@ -48,7 +48,8 @@ var CMCServer = (function () {
                 socket.on("client_join", function (client) {
                     console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
                     for (var i = 0; i < _this.clientList.length; i++) {
-                        if (_this.clientList[i].ClientId == client.ClientId) {
+                        var item = _this.clientList[i];
+                        if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
                             //true?  disconnect()会触发 disconnect event
                             _this.clientList[i].Socket.disconnect();
                         }
@@ -75,6 +76,7 @@ var CMCServer = (function () {
                     console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (var i = 0; i < _this.clientList.length; i++) {
                         if (_this.clientList[i].Socket.id == socket.id) {
+                            console.log("[" + new Date().toString() + "]客户端(storeId)【" + _this.clientList[i].ClientId + "】断 开连接！");
                             console.log("删除client：(client.ClientId client.Socket.id)", _this.clientList[i].ClientId, _this.clientList[i].Socket.id);
                             _this.clientList.splice(i, 1);
                             _this.printClient(_this.clientList);

@@ -72,6 +72,7 @@ export class CMCServer {
                 });
 
                 socket.on('disconnect', () => {
+                    console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (let i = 0; i < this.clientList.length; i++) {
                         if (this.clientList[i].Socket.id == socket.id) {
                             console.log("[" + new Date().toString() + "]客户端(storeId)【" + this.clientList[i].ClientId + "】断 开连接！");
