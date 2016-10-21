@@ -72,14 +72,14 @@ export class CMCServer {
                     console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (let i = 0; i < this.clientList.length; i++) {
                         if (this.clientList[i].Socket.id == socket.id) {
-                            console.log("[" + new Date().toString() + "]客户端(storeId)【" + this.clientList[i].ClientId + "】断 开连接！");
-                            console.log("删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
+                            console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
+                            this.onClientDisconnect && this.onClientDisconnect(this.clientList[i]);
                             this.clientList.splice(i, 1);
 
                             //日志打印代码
-                            this.printSocketList("socket.on(disconnect");
+                            this.printSocketList("socket.on(disconnect)");
                             //日志打印代码
-                            this.printClient("socket.on(disconnect");
+                            this.printClient("socket.on(disconnect)");
 
 
                             break;
@@ -98,12 +98,11 @@ export class CMCServer {
         }
     }
     Send(clientId, msg) {
-        console.log("[" + new Date().toString() + "]目的 clientId", clientId);
-        console.log("[" + new Date().toString() + "]send msg:", msg);
+        console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg , clientId);
+        console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
 
         let has: boolean = false;
         for (let item of this.clientList) {
-            console.log("[" + new Date().toString() + "]当前客户端列表：", item.ClientId);
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
                 has = true;
@@ -128,10 +127,10 @@ export class CMCServer {
         console.log("[" + new Date().toString() + "] " + str + "当前socket 数目：", count);
     }
     private printClient(str?: string) {
-        console.log("当前客户端列表：this.clientList.length", this.clientList.length);
         for (let item of this.clientList) {
             console.log("[" + new Date().toString() + "] " + str + " 当前ClientList列表：", item.ClientId, item.Socket.id);
         }
+        console.log("[" + new Date().toString() + "] " + str + "当前客户端列表：", this.clientList.length);
     }
 }
 

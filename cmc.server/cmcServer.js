@@ -72,13 +72,13 @@ var CMCServer = (function () {
                     console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (var i = 0; i < _this.clientList.length; i++) {
                         if (_this.clientList[i].Socket.id == socket.id) {
-                            console.log("[" + new Date().toString() + "]客户端(storeId)【" + _this.clientList[i].ClientId + "】断 开连接！");
-                            console.log("删除client：(client.ClientId client.Socket.id)", _this.clientList[i].ClientId, _this.clientList[i].Socket.id);
+                            console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", _this.clientList[i].ClientId, _this.clientList[i].Socket.id);
+                            _this.onClientDisconnect && _this.onClientDisconnect(_this.clientList[i]);
                             _this.clientList.splice(i, 1);
                             //日志打印代码
-                            _this.printSocketList("socket.on(disconnect");
+                            _this.printSocketList("socket.on(disconnect)");
                             //日志打印代码
-                            _this.printClient("socket.on(disconnect");
+                            _this.printClient("socket.on(disconnect)");
                             break;
                         }
                     }
@@ -94,12 +94,11 @@ var CMCServer = (function () {
         }
     };
     CMCServer.prototype.Send = function (clientId, msg) {
-        console.log("[" + new Date().toString() + "]目的 clientId", clientId);
-        console.log("[" + new Date().toString() + "]send msg:", msg);
+        console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg, clientId);
+        console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
         var has = false;
         for (var _i = 0, _a = this.clientList; _i < _a.length; _i++) {
             var item = _a[_i];
-            console.log("[" + new Date().toString() + "]当前客户端列表：", item.ClientId);
             if (item.ClientId == clientId) {
                 item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
                 has = true;
@@ -119,11 +118,11 @@ var CMCServer = (function () {
         console.log("[" + new Date().toString() + "] " + str + "当前socket 数目：", count);
     };
     CMCServer.prototype.printClient = function (str) {
-        console.log("当前客户端列表：this.clientList.length", this.clientList.length);
         for (var _i = 0, _a = this.clientList; _i < _a.length; _i++) {
             var item = _a[_i];
             console.log("[" + new Date().toString() + "] " + str + " 当前ClientList列表：", item.ClientId, item.Socket.id);
         }
+        console.log("[" + new Date().toString() + "] " + str + "当前客户端列表：", this.clientList.length);
     };
     return CMCServer;
 }());
