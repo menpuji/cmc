@@ -30,8 +30,10 @@ class CMCServer {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
             this.server.on('connection', socket => {
-                socket.on("client_join", (client) => {
+                socket.on("client_join", (client, callback) => {
                     console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
+                    //发送回执消息
+                    callback && callback(true);
                     for (let i = 0; i < this.clientList.length; i++) {
                         let item = this.clientList[i];
                         if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
@@ -47,15 +49,10 @@ class CMCServer {
                     this.printClient("socket.on(client_join");
                     this.onClientConnect && this.onClientConnect(client);
                 });
-                socket.on("client_msg_event", msg => {
+                socket.on("client_msg_event", (msg, callback) => {
                     console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
-                    let sender;
-                    for (let item of this.clientList) {
-                        if (socket.id == item.Socket.id) {
-                            sender = { ClientId: item.ClientId };
-                            break;
-                        }
-                    }
+                    callback && callback();
+                    let sender = this.clientList.find(x => x.Socket.id == socket.id);
                     this.onReceived && this.onReceived(msg, sender);
                 });
                 socket.on('disconnect', () => {
@@ -86,17 +83,18 @@ class CMCServer {
     Send(clientId, msg) {
         console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg, clientId);
         console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
-        let has = false;
-        for (let item of this.clientList) {
-            if (item.ClientId == clientId) {
-                item.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg));
-                has = true;
-                break;
-            }
-        }
-        if (!has) {
-            console.log("发送失败，客户端[" + clientId + "]未连接！");
-        }
+        return new Promise((resolve, reject) => {
+            let clientItem = this.clientList.find(x => x.ClientId == clientId);
+            if (clientItem)
+                clientItem.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg), (err) => {
+                    if (err)
+                        reject(err);
+                    else
+                        resolve();
+                });
+            else
+                reject("发送失败，客户端[" + clientId + "]未连接！");
+        });
     }
     printSocketList(str) {
         let count = 0;
