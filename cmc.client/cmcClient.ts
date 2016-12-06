@@ -21,7 +21,9 @@ export class CMCClient {
             console.log("连接服务器成功！");
             this.isConnect = true;
 
-            this.socket.compress(true).emit("client_join", { ClientId: this.clientId });
+            this.socket.compress(true).emit("client_join", { ClientId: this.clientId }, (err) => {
+                console.log("接收到服务器的连接回执消息：", err);
+            });
             this.onConnect && this.onConnect();
         });
         this.socket.on('connect_error', function (data) {
@@ -42,7 +44,7 @@ export class CMCClient {
         this.socket.on("reconnect_error", (err) => {
             console.log("reconnect_error", err);
         });
-        this.socket.on("reconnect_failed", () => { 
+        this.socket.on("reconnect_failed", () => {
             console.log("reconnect_failed");
         });
 
@@ -51,8 +53,14 @@ export class CMCClient {
             this.onDisconnect && this.onDisconnect();
         });
 
-        this.socket.on("server_msg_event", msg => {
-            this.onReceive && this.onReceive(JSON.parse(msg));
+        this.socket.on("server_msg_event", (msg, callback) => {
+            //发送回执消息
+            callback && callback();
+            if (msg instanceof Object) {
+                let data = JSON.parse(msg);
+                this.onReceive && this.onReceive(JSON.parse(msg));
+            }
+            else this.onReceive && this.onReceive(msg);
         });
 
         this.socket.on("error", (err) => {
@@ -66,9 +74,15 @@ export class CMCClient {
     }
 
     Send(msg) {
-        if (this.isConnect) {
-            this.socket.compress(false).emit("client_msg_event", msg);
-        }
+        return new Promise((resovle, reject) => {
+            if (this.isConnect) {
+                this.socket.compress(false).emit("client_msg_event", msg, (err) => {
+                    if (err) reject(err);
+                    else resovle();
+                });
+            }
+            else reject("服务器未连接");
+        });
     }
     onReceive: (msg) => void;
     onConnect: () => void;
