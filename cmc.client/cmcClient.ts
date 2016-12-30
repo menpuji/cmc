@@ -57,10 +57,11 @@ export class CMCClient {
             //发送回执消息
             callback && callback();
             if (msg instanceof Object) {
-                let data = JSON.parse(msg);
+                this.onReceive && this.onReceive(msg);
+            }
+            else {
                 this.onReceive && this.onReceive(JSON.parse(msg));
             }
-            else this.onReceive && this.onReceive(msg);
         });
 
         this.socket.on("error", (err) => {
