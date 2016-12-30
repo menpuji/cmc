@@ -18,6 +18,7 @@
   "homepage": "https://github.com/menpuji/cmc#readme",
   "dependencies": {
     "socket.io": "*",
-    "socket.io-client": "*"
+    "socket.io-client": "*",
+    "@types/socket.io-client": "*"
   }
 }

@@ -4,5 +4,5 @@
 // ioServer.Open();
 // ioServer.Listen();
 //ioServer.Send("0001","likecheng hello word!");
-var cmcServer_1 = require("./cmcServer");
+var cmcServer_1 = require('./cmcServer');
 exports.CMCServer = cmcServer_1.CMCServer;

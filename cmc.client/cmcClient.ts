@@ -1,4 +1,4 @@
-﻿import io = require("socket.io-client");
+﻿import * as io from 'socket.io-client';
 export class CMCClient {
     private socket: SocketIOClient.Socket;
     private isConnect: boolean = false;
