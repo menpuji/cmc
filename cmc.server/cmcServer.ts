@@ -90,7 +90,7 @@ export class CMCServer {
                 });
             });
             if (this.port) {
-                this.httpSvr.listen(this.port);
+                this.httpSvr.listen(this.port, "0.0.0.0");
             }
         }
     }
