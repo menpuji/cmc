@@ -1,6 +1,6 @@
 "use strict";
-const cmcServer_1 = require("./../cmcServer");
-const svr = new cmcServer_1.CMCServer();
+var cmcServer_1 = require("./../cmcServer");
+var svr = new cmcServer_1.CMCServer();
 svr.Open();
 svr.Listen();
 try {
