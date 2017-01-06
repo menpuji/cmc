@@ -46,8 +46,6 @@ var CMCServer = (function () {
                     for (var i = 0; i < _this.clientList.length; i++) {
                         var item = _this.clientList[i];
                         if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
-                            //true?  disconnect()会触发 disconnect event
-                            _this.clientList[i].Socket.disconnect();
                         }
                     }
                     client.Socket = socket;
@@ -65,7 +63,7 @@ var CMCServer = (function () {
                     _this.onReceived && _this.onReceived(msg, sender);
                 });
                 socket.on('disconnect', function () {
-                    console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
+                    console.error("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (var i = 0; i < _this.clientList.length; i++) {
                         if (_this.clientList[i].Socket.id == socket.id) {
                             console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", _this.clientList[i].ClientId, _this.clientList[i].Socket.id);
@@ -85,7 +83,7 @@ var CMCServer = (function () {
                 });
             });
             if (this.port) {
-                this.httpSvr.listen(this.port);
+                this.httpSvr.listen(this.port, "0.0.0.0");
             }
         }
     };

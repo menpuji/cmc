@@ -43,7 +43,8 @@ export class CMCServer {
                         let item = this.clientList[i];
                         if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
                             //true?  disconnect()会触发 disconnect event
-                            this.clientList[i].Socket.disconnect();
+                            // 有重复的客户端连接也不删除，给每个通道发信息。
+                            //this.clientList[i].Socket.disconnect();
                         }
                     }
 
@@ -66,7 +67,7 @@ export class CMCServer {
                 });
 
                 socket.on('disconnect', () => {
-                    console.log("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
+                    console.error("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
                     for (let i = 0; i < this.clientList.length; i++) {
                         if (this.clientList[i].Socket.id == socket.id) {
                             console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
