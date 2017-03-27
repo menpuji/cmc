@@ -11,7 +11,17 @@
             "program": "${workspaceRoot}\\example/app.ts",
             "cwd": "${workspaceRoot}",
             "outFiles": [],
-            "sourceMaps": true
+            "sourceMaps": true,
+            "env": {
+                "NODE_ENV": "development",
+                "mpjServerRootURL": "http://192.168.1.222:9090",
+                "mpjFBSConfig_fbsType": "LDC",
+                "fbsMyslq_database": "cns",       
+                "fbsMyslq_host": "115.28.165.242",
+                "fbsMyslq_password": "mpj2016",
+                "fbsMyslq_user": "dev",
+                "mpjStoreId": "e12657899f9f43ce8f0f44e70124234e"
+            }
         },
         {
             "type": "node",

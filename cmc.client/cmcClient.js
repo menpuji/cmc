@@ -29,12 +29,15 @@ var CMCClient = (function () {
             _this.onConnect && _this.onConnect();
         });
         this.socket.on('connect_error', function (data) {
+            this.isConnect = false;
             console.log("连接失败", data);
         });
         this.socket.on("connect_timeout", function () {
+            _this.isConnect = false;
             console.log("连接超时！");
         });
         this.socket.on("reconnect", function (num) {
+            _this.isConnect = true;
             console.log("重连，", num);
         });
         this.socket.on("reconnect_attempt", function () {
@@ -44,13 +47,16 @@ var CMCClient = (function () {
             console.log("reconnecting", num);
         });
         this.socket.on("reconnect_error", function (err) {
+            _this.isConnect = false;
             console.log("reconnect_error", err);
         });
         this.socket.on("reconnect_failed", function () {
+            _this.isConnect = false;
             console.log("reconnect_failed");
         });
         this.socket.on('disconnect', function () {
             console.log("与服务器连接断开！");
+            this.isConnect = false;
             this.onDisconnect && this.onDisconnect();
         });
         this.socket.on("server_msg_event", function (msg, callback) {

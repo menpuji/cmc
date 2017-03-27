@@ -6,7 +6,6 @@
             "when":"$(basename).ts"
         },
         "**/*.map": true
-    }
-
-
+    },
+    "vsicons.presets.angular": false
 }

@@ -1,18 +1,22 @@
 import io = require("socket.io");
 import http = require('http');
+import https = require("https");
+import fs = require("fs");
+import path = require("path");
 
 export class CMCServer {
     private isOpened: boolean = false;
     private server: SocketIO.Server;
+    private server_https: SocketIO.Server;
     private httpSvr: http.Server;
+    private httpsSvr: https.Server;
     private clientList: CMCClient[] = [];
     private port: number = 5050;
+    private port_https: number = 5051;
     constructor(options?: InitOptions) {
         if (options) {
-            if (options.server) {
-                this.httpSvr = options.server;
-            }
             this.port = options.port;
+            this.port_https = options.portHttps;
         }
     }
     get IsOpened(): boolean { return this.isOpened; }
@@ -23,8 +27,28 @@ export class CMCServer {
         }
 
         this.server = io(this.httpSvr);
-        this.isOpened = true;
         console.log("socket服务器启动成功！");
+
+
+        let dir = "/extracted/fbs/certificate/";
+        if (process.env.NODE_ENV == "development") dir = "/certificate/";
+
+        //开启监听Https端口
+        let options = {
+            key: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.key')),
+            cert: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.crt'))
+        };
+
+        this.httpsSvr = https.createServer(options, function (req, res) {
+            res.writeHead(200);
+            res.end('hello world https\n');
+        });
+
+        this.server_https = io(this.httpsSvr);
+        console.log("socket https服务器启动成功！");
+
+
+        this.isOpened = true;
     }
     Close() {
         this.server.close();
@@ -34,64 +58,11 @@ export class CMCServer {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
 
-            this.server.on('connection', socket => {
-                socket.on("client_join", (client: CMCClient, callback) => {
-                    console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
-                    //发送回执消息
-                    callback && callback(true);
-                    for (let i = 0; i < this.clientList.length; i++) {
-                        let item = this.clientList[i];
-                        if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
-                            //true?  disconnect()会触发 disconnect event
-                            // 有重复的客户端连接也不删除，给每个通道发信息。
-                            //this.clientList[i].Socket.disconnect();
-                        }
-                    }
+            this.server.on('connection', this.socket_connection);
 
-                    client.Socket = socket;
-                    this.clientList.push(client);
-
-                    //日志打印代码
-                    this.printSocketList("socket.on(client_join");
-                    //日志打印代码
-                    this.printClient("socket.on(client_join");
-
-                    this.onClientConnect && this.onClientConnect(client);
-                });
-
-                socket.on("client_msg_event", (msg, callback) => {
-                    console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
-                    callback && callback();
-                    let sender = this.clientList.find(x => x.Socket.id == socket.id);
-                    this.onReceived && this.onReceived(msg, sender);
-                });
-
-                socket.on('disconnect', () => {
-                    console.error("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
-                    for (let i = 0; i < this.clientList.length; i++) {
-                        if (this.clientList[i].Socket.id == socket.id) {
-                            console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
-                            this.onClientDisconnect && this.onClientDisconnect(this.clientList[i]);
-                            this.clientList.splice(i, 1);
-
-                            //日志打印代码
-                            this.printSocketList("socket.on(disconnect)");
-                            //日志打印代码
-                            this.printClient("socket.on(disconnect)");
-
-
-                            break;
-                        }
-                    }
-                });
-
-                socket.on("error", (err, client) => {
-                    console.log("错误消息：", err);
-                    this.onError && this.onError(err, client);
-                });
-            });
             if (this.port) {
                 this.httpSvr.listen(this.port, "0.0.0.0");
+                this.httpsSvr.listen(this.port_https, "0.0.0.0");
             }
         }
     }
@@ -128,6 +99,63 @@ export class CMCServer {
         }
         console.log("[" + new Date().toString() + "] " + str + "当前客户端列表：", this.clientList.length);
     }
+
+    private socket_connection(socket) {
+        socket.on("client_join", (client: CMCClient, callback) => {
+            console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
+            //发送回执消息
+            callback && callback(true);
+            // for (let i = 0; i < this.clientList.length; i++) {
+            //     let item = this.clientList[i];
+            //     if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
+            //         //true?  disconnect()会触发 disconnect event
+            //         // 有重复的客户端连接也不删除，给每个通道发信息。
+            //         //this.clientList[i].Socket.disconnect();
+            //     }
+            // }
+
+            client.Socket = socket;
+            this.clientList.push(client);
+
+            //日志打印代码
+            this.printSocketList("socket.on(client_join");
+            //日志打印代码
+            this.printClient("socket.on(client_join");
+
+            this.onClientConnect && this.onClientConnect(client);
+        });
+
+        socket.on("client_msg_event", (msg, callback) => {
+            console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
+            callback && callback();
+            let sender = this.clientList.find(x => x.Socket.id == socket.id);
+            this.onReceived && this.onReceived(msg, sender);
+        });
+
+        socket.on('disconnect', () => {
+            console.error("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
+            for (let i = 0; i < this.clientList.length; i++) {
+                if (this.clientList[i].Socket.id == socket.id) {
+                    console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
+                    this.onClientDisconnect && this.onClientDisconnect(this.clientList[i]);
+                    this.clientList.splice(i, 1);
+
+                    //日志打印代码
+                    this.printSocketList("socket.on(disconnect)");
+                    //日志打印代码
+                    this.printClient("socket.on(disconnect)");
+
+
+                    break;
+                }
+            }
+        });
+
+        socket.on("error", (err, client) => {
+            console.log("错误消息：", err);
+            this.onError && this.onError(err, client);
+        });
+    }
 }
 
 interface CMCClient {
@@ -137,5 +165,5 @@ interface CMCClient {
 
 interface InitOptions {
     port?: number;
-    server?: http.Server;
+    portHttps?: number;
 }
