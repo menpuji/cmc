@@ -45,7 +45,7 @@ class CMCServer {
     Listen() {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
-            this.server.on('connection', this.socket_connection);
+            this.server.on('connection', this.socket_connection.bind(this));
             if (this.port) {
                 this.httpSvr.listen(this.port, "0.0.0.0");
                 this.httpsSvr.listen(this.port_https, "0.0.0.0");
