@@ -8,8 +8,8 @@ class CMCServer {
     constructor(options) {
         this.isOpened = false;
         this.clientList = [];
-        this.port = 5050;
-        this.port_https = 5051;
+        this.port = 8897;
+        this.port_https = 8896;
         if (options) {
             this.port = options.port;
             this.port_https = options.portHttps;
@@ -46,6 +46,7 @@ class CMCServer {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
             this.server.on('connection', this.socket_connection.bind(this));
+            this.server_https.on('connection', this.socket_connection.bind(this));
             if (this.port) {
                 this.httpSvr.listen(this.port, "0.0.0.0");
                 this.httpsSvr.listen(this.port_https, "0.0.0.0");

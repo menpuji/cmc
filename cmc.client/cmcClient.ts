@@ -16,7 +16,7 @@ export class CMCClient {
     }
 
     Connect() {
-        this.socket = io(this.hostName + ":" + this.port);
+        this.socket = io(this.hostName + ":" + this.port, { secure: true });
         this.socket.on('connect', () => {
             console.log("连接服务器成功！");
             this.isConnect = true;

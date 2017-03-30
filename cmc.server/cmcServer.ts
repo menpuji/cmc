@@ -11,8 +11,8 @@ export class CMCServer {
     private httpSvr: http.Server;
     private httpsSvr: https.Server;
     private clientList: CMCClient[] = [];
-    private port: number = 5050;
-    private port_https: number = 5051;
+    private port: number = 8897;
+    private port_https: number = 8896;
     constructor(options?: InitOptions) {
         if (options) {
             this.port = options.port;
@@ -59,6 +59,7 @@ export class CMCServer {
             console.log("开启socket服务端监听，端口:" + this.port);
 
             this.server.on('connection', this.socket_connection.bind(this));
+            this.server_https.on('connection', this.socket_connection.bind(this));
 
             if (this.port) {
                 this.httpSvr.listen(this.port, "0.0.0.0");
