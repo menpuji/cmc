@@ -68,7 +68,7 @@ export class CMCServer {
         }
     }
     Send(clientId, msg) {
-        console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg, clientId);
+        console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg);
         console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
 
         return new Promise((resolve, reject) => {
@@ -119,15 +119,15 @@ export class CMCServer {
             this.clientList.push(client);
 
             //日志打印代码
-            this.printSocketList("socket.on(client_join");
+            //this.printSocketList("socket.on(client_join");
             //日志打印代码
-            this.printClient("socket.on(client_join");
+            //this.printClient("socket.on(client_join");
 
             this.onClientConnect && this.onClientConnect(client);
         });
 
         socket.on("client_msg_event", (msg, callback) => {
-            console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
+            //console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
             callback && callback();
             let sender = this.clientList.find(x => x.Socket.id == socket.id);
             this.onReceived && this.onReceived(msg, sender);
