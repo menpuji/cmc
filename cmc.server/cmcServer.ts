@@ -26,9 +26,18 @@ export class CMCServer {
             this.httpSvr = http.createServer();
         }
 
-        this.server = io(this.httpSvr);
-        console.log("socket服务器启动成功！");
+        let opt = {
+            path: '/',
+            serveClient: true,
+            // below are engine.IO options
+            pingInterval: 10000,
+            pingTimeout: 5000,
+            cookie: false
 
+        };
+
+        this.server = io(this.httpSvr, opt);
+        console.log("socket服务器启动成功！");
 
         let dir = "/extracted/fbs/certificate/";
         if (process.env.NODE_ENV == "development") dir = "/certificate/";
@@ -44,7 +53,7 @@ export class CMCServer {
             res.end('hello world https\n');
         });
 
-        this.server_https = io(this.httpsSvr);
+        this.server_https = io(this.httpsSvr, opt);
         console.log("socket https服务器启动成功！");
 
 
@@ -67,24 +76,35 @@ export class CMCServer {
             }
         }
     }
-    Send(clientId, msg) {
-        console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg);
+    async Send(msg, socket: SocketIO.Socket) {
+        let clientList = await this.getClientList();
+        console.log(clientList);
         console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
 
-        return new Promise((resolve, reject) => {
-            let clientItem = this.clientList.find(x => x.ClientId == clientId);
-            if (clientItem)
-                clientItem.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg), (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            else reject("发送失败，客户端[" + clientId + "]未连接！");
-        });
+        socket.broadcast.compress(true).emit("server_msg_event", msg);
+        // socket.volatile.compress(true).emit("server_msg_event", msg);
+
     }
-    onReceived: (msg, sender) => void;
+    SendTo(msg, socket: SocketIO.Socket, desSocketId: string, callback) {
+        socket.to(desSocketId).compress(true).emit("server_msg_event", msg, callback);
+    }
+    onReceived: (msg, socket: SocketIO.Socket, callback?) => void;
     onClientDisconnect: (sender: { ClientId: string }) => void;
     onClientConnect: (client: CMCClient) => void;
     onError: (err, client) => void;
+
+
+    private getClientList() {
+        return new Promise((resolve, reject) => {
+            if (!this.server) reject("当前服务器没有初始化！");
+            this.server.clients((error, clients: SocketIO.Client[]) => {
+                if (error) reject(error);
+                else {
+                    resolve(clients);
+                }
+            });
+        });
+    }
 
     private printSocketList(str?: string) {
         let count = 0;
@@ -101,36 +121,20 @@ export class CMCServer {
         console.log("[" + new Date().toString() + "] " + str + "当前客户端列表：", this.clientList.length);
     }
 
-    private socket_connection(socket) {
-        socket.on("client_join", (client: CMCClient, callback) => {
+    private socket_connection(socket: SocketIO.Socket) {
+        socket.on("client_join", async (client: CMCClient, callback) => {
             console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
             //发送回执消息
             callback && callback(true);
-            // for (let i = 0; i < this.clientList.length; i++) {
-            //     let item = this.clientList[i];
-            //     if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
-            //         //true?  disconnect()会触发 disconnect event
-            //         // 有重复的客户端连接也不删除，给每个通道发信息。
-            //         //this.clientList[i].Socket.disconnect();
-            //     }
-            // }
 
             client.Socket = socket;
             this.clientList.push(client);
-
-            //日志打印代码
-            //this.printSocketList("socket.on(client_join");
-            //日志打印代码
-            //this.printClient("socket.on(client_join");
 
             this.onClientConnect && this.onClientConnect(client);
         });
 
         socket.on("client_msg_event", (msg, callback) => {
-            //console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
-            callback && callback();
-            let sender = this.clientList.find(x => x.Socket.id == socket.id);
-            this.onReceived && this.onReceived(msg, sender);
+            this.onReceived && this.onReceived(msg, socket, callback);
         });
 
         socket.on('disconnect', () => {

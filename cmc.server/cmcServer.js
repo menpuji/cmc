@@ -1,11 +1,20 @@
 "use strict";
-var io = require("socket.io");
-var http = require("http");
-var https = require("https");
-var fs = require("fs");
-var path = require("path");
-var CMCServer = (function () {
-    function CMCServer(options) {
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const io = require("socket.io");
+const http = require("http");
+const https = require("https");
+const fs = require("fs");
+const path = require("path");
+class CMCServer {
+    constructor(options) {
         this.isOpened = false;
         this.clientList = [];
         this.port = 8897;
@@ -15,27 +24,27 @@ var CMCServer = (function () {
             this.port_https = options.portHttps;
         }
     }
-    Object.defineProperty(CMCServer.prototype, "IsOpened", {
-        get: function () { return this.isOpened; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(CMCServer.prototype, "Port", {
-        get: function () { return this.port; },
-        enumerable: true,
-        configurable: true
-    });
-    CMCServer.prototype.Open = function () {
+    get IsOpened() { return this.isOpened; }
+    get Port() { return this.port; }
+    Open() {
         if (!this.httpSvr) {
             this.httpSvr = http.createServer();
         }
-        this.server = io(this.httpSvr);
+        let opt = {
+            path: '/',
+            serveClient: true,
+            // below are engine.IO options
+            pingInterval: 10000,
+            pingTimeout: 5000,
+            cookie: false
+        };
+        this.server = io(this.httpSvr, opt);
         console.log("socket服务器启动成功！");
-        var dir = "/extracted/fbs/certificate/";
+        let dir = "/extracted/fbs/certificate/";
         if (process.env.NODE_ENV == "development")
             dir = "/certificate/";
         //开启监听Https端口
-        var options = {
+        let options = {
             key: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.key')),
             cert: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.crt'))
         };
@@ -43,14 +52,14 @@ var CMCServer = (function () {
             res.writeHead(200);
             res.end('hello world https\n');
         });
-        this.server_https = io(this.httpsSvr);
+        this.server_https = io(this.httpsSvr, opt);
         console.log("socket https服务器启动成功！");
         this.isOpened = true;
-    };
-    CMCServer.prototype.Close = function () {
+    }
+    Close() {
         this.server.close();
-    };
-    CMCServer.prototype.Listen = function () {
+    }
+    Listen() {
         if (this.isOpened) {
             console.log("开启socket服务端监听，端口:" + this.port);
             this.server.on('connection', this.socket_connection.bind(this));
@@ -60,87 +69,78 @@ var CMCServer = (function () {
                 this.httpsSvr.listen(this.port_https, "0.0.0.0");
             }
         }
-    };
-    CMCServer.prototype.Send = function (clientId, msg) {
-        var _this = this;
-        console.log("[" + new Date().toString() + "] Send(clientId, msg) ==> msg/clientId:", msg);
-        console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
-        return new Promise(function (resolve, reject) {
-            var clientItem = _this.clientList.find(function (x) { return x.ClientId == clientId; });
-            if (clientItem)
-                clientItem.Socket.compress(true).emit("server_msg_event", JSON.stringify(msg), function (err) {
-                    if (err)
-                        reject(err);
-                    else
-                        resolve();
-                });
-            else
-                reject("发送失败，客户端[" + clientId + "]未连接！");
+    }
+    Send(msg, socket) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let clientList = yield this.getClientList();
+            console.log(clientList);
+            console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
+            socket.broadcast.compress(true).emit("server_msg_event", msg);
+            // socket.volatile.compress(true).emit("server_msg_event", msg);
         });
-    };
-    CMCServer.prototype.printSocketList = function (str) {
-        var count = 0;
-        for (var key in this.server.sockets.sockets) {
+    }
+    SendTo(msg, socket, desSocketId, callback) {
+        socket.to(desSocketId).compress(true).emit("server_msg_event", msg, callback);
+    }
+    getClientList() {
+        return new Promise((resolve, reject) => {
+            if (!this.server)
+                reject("当前服务器没有初始化！");
+            this.server.clients((error, clients) => {
+                if (error)
+                    reject(error);
+                else {
+                    resolve(clients);
+                }
+            });
+        });
+    }
+    printSocketList(str) {
+        let count = 0;
+        for (let key in this.server.sockets.sockets) {
             console.log("[" + new Date().toString() + "] " + str + " 当前socketId列表：", key);
             count++;
         }
         console.log("[" + new Date().toString() + "] " + str + "当前socket 数目：", count);
-    };
-    CMCServer.prototype.printClient = function (str) {
-        for (var _i = 0, _a = this.clientList; _i < _a.length; _i++) {
-            var item = _a[_i];
+    }
+    printClient(str) {
+        for (let item of this.clientList) {
             console.log("[" + new Date().toString() + "] " + str + " 当前ClientList列表：", item.ClientId, item.Socket.id);
         }
         console.log("[" + new Date().toString() + "] " + str + "当前客户端列表：", this.clientList.length);
-    };
-    CMCServer.prototype.socket_connection = function (socket) {
-        var _this = this;
-        socket.on("client_join", function (client, callback) {
+    }
+    socket_connection(socket) {
+        socket.on("client_join", (client, callback) => __awaiter(this, void 0, void 0, function* () {
             console.log("[" + new Date().toString() + "]客户端：[" + socket.id + "] [" + client.ClientId + "]已连接!");
             //发送回执消息
             callback && callback(true);
-            // for (let i = 0; i < this.clientList.length; i++) {
-            //     let item = this.clientList[i];
-            //     if (item.ClientId == client.ClientId && item.Socket.id != socket.id) {
-            //         //true?  disconnect()会触发 disconnect event
-            //         // 有重复的客户端连接也不删除，给每个通道发信息。
-            //         //this.clientList[i].Socket.disconnect();
-            //     }
-            // }
             client.Socket = socket;
-            _this.clientList.push(client);
-            //日志打印代码
-            //this.printSocketList("socket.on(client_join");
-            //日志打印代码
-            //this.printClient("socket.on(client_join");
-            _this.onClientConnect && _this.onClientConnect(client);
+            this.clientList.push(client);
+            this.onClientConnect && this.onClientConnect(client);
+        }));
+        socket.on("client_msg_event", (msg, callback) => {
+            this.onReceived && this.onReceived(msg, socket, callback);
         });
-        socket.on("client_msg_event", function (msg, callback) {
-            //console.log("[" + new Date().toString() + "]client_msg_event=>", msg);
-            callback && callback();
-            var sender = _this.clientList.find(function (x) { return x.Socket.id == socket.id; });
-            _this.onReceived && _this.onReceived(msg, sender);
-        });
-        socket.on('disconnect', function () {
+        socket.on('disconnect', () => {
             console.error("[" + new Date().toString() + "]客户端【" + socket.id + "】断开连接！");
-            for (var i = 0; i < _this.clientList.length; i++) {
-                if (_this.clientList[i].Socket.id == socket.id) {
-                    console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", _this.clientList[i].ClientId, _this.clientList[i].Socket.id);
-                    _this.onClientDisconnect && _this.onClientDisconnect(_this.clientList[i]);
-                    _this.clientList.splice(i, 1);
+            for (let i = 0; i < this.clientList.length; i++) {
+                if (this.clientList[i].Socket.id == socket.id) {
+                    console.log("[" + new Date().toString() + "]删除client：(client.ClientId client.Socket.id)", this.clientList[i].ClientId, this.clientList[i].Socket.id);
+                    this.onClientDisconnect && this.onClientDisconnect(this.clientList[i]);
+                    this.clientList.splice(i, 1);
                     //日志打印代码
-                    _this.printSocketList("socket.on(disconnect)");
+                    this.printSocketList("socket.on(disconnect)");
                     //日志打印代码
-                    _this.printClient("socket.on(disconnect)");
+                    this.printClient("socket.on(disconnect)");
                     break;
                 }
             }
         });
-        socket.on("error", function (err, client) {
+        socket.on("error", (err, client) => {
             console.log("错误消息：", err);
-            _this.onError && _this.onError(err, client);
+            this.onError && this.onError(err, client);
         });
-    };
-    return CMCServer;
-}());
+    }
+}
 exports.CMCServer = CMCServer;
+//# sourceMappingURL=cmcServer.js.map

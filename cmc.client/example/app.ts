@@ -1,5 +1,5 @@
 import { CMCClient } from '../cmcClient';
-const client = new CMCClient("https://172.16.254.127", 8896, "likecheng#1");
+const client = new CMCClient("localhost", 8896, "likecheng#1");
 client.Connect();
 
 
