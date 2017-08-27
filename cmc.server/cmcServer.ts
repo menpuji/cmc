@@ -81,12 +81,26 @@ export class CMCServer {
         console.log(clientList);
         console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
 
-        socket.broadcast.compress(true).emit("server_msg_event", msg);
-        // socket.volatile.compress(true).emit("server_msg_event", msg);
+        socket.broadcast.compress(true).emit("server_msg_event", JSON.stringify(msg));
 
     }
     SendTo(msg, socket: SocketIO.Socket, desSocketId: string, callback) {
-        socket.to(desSocketId).compress(true).emit("server_msg_event", msg, callback);
+        try {
+            let sct = this.clientList.find(x => x.Socket.id === desSocketId).Socket;
+            let isTimeout = false;
+            let s = setTimeout(() => {
+                isTimeout = true;
+                callback("打印超时！请重试！");
+            }, 5000);
+            sct.emit("server_msg_event", JSON.stringify(msg), (err, data) => {
+                if(isTimeout) return ;
+                clearTimeout(s);
+                console.log("客户端确认消息回掉函数！");
+                callback(err, data);
+            });
+        } catch (error) {
+            callback(error);
+        }
     }
     onReceived: (msg, socket: SocketIO.Socket, callback?) => void;
     onClientDisconnect: (sender: { ClientId: string }) => void;
