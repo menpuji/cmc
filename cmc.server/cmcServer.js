@@ -72,10 +72,14 @@ class CMCServer {
     }
     Send(msg, socket) {
         return __awaiter(this, void 0, void 0, function* () {
-            let clientList = yield this.getClientList();
-            console.log(clientList);
+            // let clientList = await this.getHttpsClientList();
+            // console.log(clientList);
             console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
             socket.broadcast.compress(true).emit("server_msg_event", JSON.stringify(msg));
+            //https 的消息单独通知
+            for (let sck in this.server_https.sockets.sockets) {
+                this.server_https.sockets.sockets[sck].emit("server_msg_event", JSON.stringify(msg));
+            }
         });
     }
     SendTo(msg, socket, desSocketId, callback) {
@@ -103,6 +107,19 @@ class CMCServer {
             if (!this.server)
                 reject("当前服务器没有初始化！");
             this.server.clients((error, clients) => {
+                if (error)
+                    reject(error);
+                else {
+                    resolve(clients);
+                }
+            });
+        });
+    }
+    getHttpsClientList() {
+        return new Promise((resolve, reject) => {
+            if (!this.server_https)
+                reject("当前服务器没有初始化！");
+            this.server_https.clients((error, clients) => {
                 if (error)
                     reject(error);
                 else {

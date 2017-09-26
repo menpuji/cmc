@@ -77,11 +77,16 @@ export class CMCServer {
         }
     }
     async Send(msg, socket: SocketIO.Socket) {
-        let clientList = await this.getClientList();
-        console.log(clientList);
+        // let clientList = await this.getHttpsClientList();
+        // console.log(clientList);
         console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
 
         socket.broadcast.compress(true).emit("server_msg_event", JSON.stringify(msg));
+
+        //https 的消息单独通知
+        for (let sck in this.server_https.sockets.sockets) {
+            this.server_https.sockets.sockets[sck].emit("server_msg_event", JSON.stringify(msg));
+        }
 
     }
     SendTo(msg, socket: SocketIO.Socket, desSocketId: string, callback) {
@@ -93,7 +98,7 @@ export class CMCServer {
                 callback("打印超时！请重试！");
             }, 5000);
             sct.emit("server_msg_event", JSON.stringify(msg), (err, data) => {
-                if(isTimeout) return ;
+                if (isTimeout) return;
                 clearTimeout(s);
                 console.log("客户端确认消息回掉函数！");
                 callback(err, data);
@@ -112,6 +117,18 @@ export class CMCServer {
         return new Promise((resolve, reject) => {
             if (!this.server) reject("当前服务器没有初始化！");
             this.server.clients((error, clients: SocketIO.Client[]) => {
+                if (error) reject(error);
+                else {
+                    resolve(clients);
+                }
+            });
+        });
+    }
+
+    private getHttpsClientList() {
+        return new Promise((resolve, reject) => {
+            if (!this.server_https) reject("当前服务器没有初始化！");
+            this.server_https.clients((error, clients: SocketIO.Client[]) => {
                 if (error) reject(error);
                 else {
                     resolve(clients);
