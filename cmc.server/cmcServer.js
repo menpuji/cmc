@@ -41,7 +41,7 @@ class CMCServer {
         this.server = io(this.httpSvr, opt);
         console.log("socket服务器启动成功！");
         let dir = "/extracted/fbs/certificate/";
-        if (process.env.NODE_ENV == "development")
+        if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "producation")
             dir = "/certificate/";
         //开启监听Https端口
         let options = {
