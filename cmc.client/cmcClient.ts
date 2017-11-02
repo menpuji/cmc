@@ -26,7 +26,7 @@ export class CMCClient {
             });
             this.onConnect && this.onConnect();
         });
-        this.socket.on('connect_error', function (data) {
+        this.socket.on('connect_error', data => {
             this.isConnect = false;
             console.log("连接失败", data);
         });
@@ -53,7 +53,7 @@ export class CMCClient {
             console.log("reconnect_failed");
         });
 
-        this.socket.on('disconnect', function () {
+        this.socket.on('disconnect', () => {
             console.log("与服务器连接断开！");
             this.isConnect = false;
             this.onDisconnect && this.onDisconnect();
