@@ -80,13 +80,18 @@ export class CMCClient {
         this.socket.close();
     }
 
-    Send(msg) {
+    Send(msg, needAsk?: boolean) {
         return new Promise((resovle, reject) => {
             if (this.isConnect) {
-                this.socket.compress(false).emit("client_msg_event", msg, (err) => {
-                    if (err) reject(err);
-                    else resovle();
-                });
+                if (needAsk) {
+                    this.socket.compress(false).emit("client_msg_event", msg, (err) => {
+                        if (err) reject(err);
+                        else resovle();
+                    });
+                }
+                else {
+                    this.socket.compress(false).emit("client_msg_event", msg);
+                }
             }
             else reject("服务器未连接");
         });
