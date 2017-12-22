@@ -82,6 +82,7 @@ class CMCClient {
                 }
                 else {
                     this.socket.compress(false).emit("client_msg_event", msg);
+                    resovle();
                 }
             }
             else

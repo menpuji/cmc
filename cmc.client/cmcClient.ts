@@ -91,6 +91,7 @@ export class CMCClient {
                 }
                 else {
                     this.socket.compress(false).emit("client_msg_event", msg);
+                    resovle();
                 }
             }
             else reject("服务器未连接");
