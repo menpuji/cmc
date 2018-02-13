@@ -7,3 +7,4 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //ioServer.Send("0001","likecheng hello word!");
 var cmcServer_1 = require("./cmcServer");
 exports.CMCServer = cmcServer_1.CMCServer;
+//# sourceMappingURL=index.js.map

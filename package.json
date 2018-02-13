@@ -1,6 +1,6 @@
 {
-  "name": "mpj-cmc",
-  "version": "1.2.6",
+"name": "mpj-cmc",
+  "version": "1.2.7",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -17,8 +17,11 @@
   },
   "homepage": "https://github.com/menpuji/cmc#readme",
   "dependencies": {
+    "@types/socket.io-client": "*",
     "socket.io": "*",
-    "socket.io-client": "*",
-    "@types/socket.io-client": "*"
+    "socket.io-client": "*"
+  },
+  "devDependencies": {
+    "@types/socket.io": "^1.4.31"
   }
 }
