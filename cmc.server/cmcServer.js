@@ -17,15 +17,18 @@ class CMCServer {
     constructor(options) {
         this.isOpened = false;
         this.clientList = [];
-        this.port = 8897;
-        this.port_https = 8896;
         if (options) {
-            this.port = options.port;
-            this.port_https = options.portHttps;
+            this.options = options;
+        }
+        else {
+            this.options = {
+                port: 8897,
+                portHttps: 8896
+            };
         }
     }
     get IsOpened() { return this.isOpened; }
-    get Port() { return this.port; }
+    get Port() { return this.options.port; }
     Open() {
         if (!this.httpSvr) {
             this.httpSvr = http.createServer();
@@ -40,13 +43,10 @@ class CMCServer {
         };
         this.server = io(this.httpSvr, opt);
         console.log("socket服务器启动成功！");
-        let dir = "/extracted/fbs/certificate/";
-        if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "production")
-            dir = "/certificate/";
         //开启监听Https端口
         let options = {
-            key: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.key')),
-            cert: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.crt'))
+            key: fs.readFileSync(path.normalize(process.cwd() + this.options.certificate.caKeyPath)),
+            cert: fs.readFileSync(path.normalize(process.cwd() + this.options.certificate.caCrtPath))
         };
         this.httpsSvr = https.createServer(options, function (req, res) {
             res.writeHead(200);
@@ -61,19 +61,15 @@ class CMCServer {
     }
     Listen() {
         if (this.isOpened) {
-            console.log("开启socket服务端监听，端口:" + this.port);
+            console.log("开启socket服务端监听，端口:" + this.options.port);
             this.server.on('connection', this.socket_connection.bind(this));
             this.server_https.on('connection', this.socket_connection.bind(this));
-            if (this.port) {
-                this.httpSvr.listen(this.port, "0.0.0.0");
-                this.httpsSvr.listen(this.port_https, "0.0.0.0");
-            }
+            this.httpSvr.listen(this.options.port, "0.0.0.0");
+            this.httpsSvr.listen(this.options.portHttps, "0.0.0.0");
         }
     }
     Send(msg, socket) {
         return __awaiter(this, void 0, void 0, function* () {
-            // let clientList = await this.getHttpsClientList();
-            // console.log(clientList);
             console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
             socket.broadcast.compress(true).emit("server_msg_event", JSON.stringify(msg));
             //https 的消息单独通知

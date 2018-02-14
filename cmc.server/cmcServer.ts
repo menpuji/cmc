@@ -11,16 +11,20 @@ export class CMCServer {
     private httpSvr: http.Server;
     private httpsSvr: https.Server;
     private clientList: CMCClient[] = [];
-    private port: number = 8897;
-    private port_https: number = 8896;
+    private options: InitOptions;
     constructor(options?: InitOptions) {
         if (options) {
-            this.port = options.port;
-            this.port_https = options.portHttps;
+            this.options = options;
+        }
+        else {
+            this.options = {
+                port: 8897,
+                portHttps: 8896
+            };
         }
     }
     get IsOpened(): boolean { return this.isOpened; }
-    get Port(): number { return this.port; }
+    get Port(): number { return this.options.port }
     Open() {
         if (!this.httpSvr) {
             this.httpSvr = http.createServer();
@@ -39,13 +43,10 @@ export class CMCServer {
         this.server = io(this.httpSvr, opt);
         console.log("socket服务器启动成功！");
 
-        let dir = "/extracted/fbs/certificate/";
-        if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "production") dir = "/certificate/";
-
         //开启监听Https端口
         let options = {
-            key: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.key')),
-            cert: fs.readFileSync(path.normalize(process.cwd() + dir + 'ca.crt'))
+            key: fs.readFileSync(path.normalize(process.cwd() + this.options.certificate.caKeyPath)),
+            cert: fs.readFileSync(path.normalize(process.cwd() + this.options.certificate.caCrtPath))
         };
 
         this.httpsSvr = https.createServer(options, function (req, res) {
@@ -56,7 +57,6 @@ export class CMCServer {
         this.server_https = io(this.httpsSvr, opt);
         console.log("socket https服务器启动成功！");
 
-
         this.isOpened = true;
     }
     Close() {
@@ -65,20 +65,16 @@ export class CMCServer {
 
     Listen() {
         if (this.isOpened) {
-            console.log("开启socket服务端监听，端口:" + this.port);
+            console.log("开启socket服务端监听，端口:" + this.options.port);
 
             this.server.on('connection', this.socket_connection.bind(this));
             this.server_https.on('connection', this.socket_connection.bind(this));
 
-            if (this.port) {
-                this.httpSvr.listen(this.port, "0.0.0.0");
-                this.httpsSvr.listen(this.port_https, "0.0.0.0");
-            }
+            this.httpSvr.listen(this.options.port, "0.0.0.0");
+            this.httpsSvr.listen(this.options.portHttps, "0.0.0.0");
         }
     }
     async Send(msg, socket: SocketIO.Socket) {
-        // let clientList = await this.getHttpsClientList();
-        // console.log(clientList);
         console.log("[" + new Date().toString() + "]当前客户端列表数目 ==>", this.clientList.length);
 
         socket.broadcast.compress(true).emit("server_msg_event", JSON.stringify(msg));
@@ -202,4 +198,8 @@ interface CMCClient {
 interface InitOptions {
     port?: number;
     portHttps?: number;
+    certificate?: {
+        caKeyPath: string;
+        caCrtPath: string;
+    };
 }
